@@ -3,18 +3,19 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Enter Google Sheet ID"
-        />
+    <!--<TextView-->
+        <!--android:layout_width="fill_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Enter Google Sheet ID"-->
+        <!--/>-->
     <EditText
         android:id="@+id/txtGoogleId"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:hint="Google Sheet Id"
         />
 
     <Button
@@ -24,6 +25,28 @@
         android:text="Download"
 
         />
+
+    <RelativeLayout
+        android:id="@+id/FileSelectorLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/LFileInput"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="Image Filename"
+            android:layout_marginBottom="5dp" />
+
+        <ImageView
+            android:id="@+id/GET_FILE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/LFileInput"
+            android:layout_alignRight="@+id/LFileInput"
+            android:layout_alignTop="@+id/LFileInput"
+            android:padding="5dp"
+            app:srcCompat="@android:drawable/ic_menu_search" />
+    </RelativeLayout>
 
 
     <Button
@@ -45,12 +68,14 @@
         android:gravity="top"
 
         />
+
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Calling Status"
         android:id="@+id/Status"
         />
+
 
 
 

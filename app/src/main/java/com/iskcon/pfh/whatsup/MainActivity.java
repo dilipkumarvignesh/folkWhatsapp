@@ -1,7 +1,9 @@
 package com.iskcon.pfh.whatsup;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -10,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,6 +20,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+
+import static android.app.Activity.RESULT_OK;
 import static com.iskcon.pfh.whatsup.R.id.Status;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,21 +32,32 @@ public class MainActivity extends AppCompatActivity {
     String GoogleId;
     int contact_count=0;
     TextView txtStatus;
-    EditText txtGoogleId,txtMessage;
+    ImageView search;
+    EditText txtGoogleId,txtMessage,lFileInput;
     Button btnDownload,add,addName;
     int addVariableCount = 2; String message;
     int i=0;
+    Uri uri;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
       //  setSupportActionBar(toolbar);
-//
+
         txtGoogleId = (EditText) findViewById(R.id.txtGoogleId);
         txtMessage = (EditText) findViewById(R.id.txtMessage);
         txtStatus = (TextView) findViewById(Status);
         btnDownload = (Button) findViewById(R.id.btnDownload);
+        lFileInput = (EditText)findViewById(R.id.LFileInput);
+        search = (ImageView)findViewById(R.id.GET_FILE);
+        search.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.setType("*/*");
+                startActivityForResult(i, 15);
+            }
+        });
         btnDownload.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 Log.d("info", "onClick working");
@@ -120,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
                     {
                         jNumber = objects.get(""+j).toString();
                         jNumber= "91"+jNumber;
+                        Log.d("info","number"+jNumber);
 
                     }
                     else {
@@ -130,13 +148,22 @@ public class MainActivity extends AppCompatActivity {
 //            String jName = objects.get("Name").toString();
 //            String jNumber = objects.get("Number").toString();
             Intent sendIntent = new Intent("android.intent.action.MAIN");
-            //sendIntent.setComponent(new ComponentName("com.whatsapp", "com.whatsapp.Conversation"));
+
             sendIntent.setAction(Intent.ACTION_SEND);
 
-            sendIntent.setType("text/plain");
-         //   String message="Hare Krishna "+jName+","+Message;
-                final_message = final_message.replace("<name>", jName);
-            sendIntent.putExtra(Intent.EXTRA_TEXT, final_message);
+                if(lFileInput.getText().toString().isEmpty())
+                {
+                    sendIntent.setType("text/plain");
+                    sendIntent.putExtra(Intent.EXTRA_TEXT, final_message);
+                }
+                else {
+                    sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                    sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    sendIntent.setType("image/*");
+                }
+                    final_message = final_message.replace("<name>", jName);
+                    sendIntent.putExtra(Intent.EXTRA_TEXT, final_message);
+
 
             sendIntent.putExtra("jid", jNumber + "@s.whatsapp.net"); //phone number without "+" prefix
             sendIntent.setPackage("com.whatsapp");
@@ -161,7 +188,50 @@ public class MainActivity extends AppCompatActivity {
 
             sendWhatsapp();
         }
+        if(requestCode == 15) {
+            if (resultCode == RESULT_OK) {
+                Log.d("info", "file:" + data.getData());
+                uri = data.getData();
+                String uriString = uri.toString();
+                lFileInput.setText(uriString);
+//                File file = new File(uriString);
+//                Log.d("info", "Filepath:" + file.getAbsolutePath());
+//                String path = file.getAbsolutePath();
+//                String displayName = null;
+//                if (uriString.startsWith("content:/")) {
+//                    //     Log.d("info","Inside Content"+getFilePath(file.getAbsolutePath().toString()));
+//
+//
+//                    lFileInput.setText(getFilePath(uri.getPath(),false));
+//
+//
+//                } else if (uriString.startsWith("file://")) {
+//                    lFileInput.setText(getFilePath(data.getData().toString(),true));
+//                }
+//
+//                Log.d("info", "Filepath:" + path);
+//                Toast.makeText(getApplicationContext(),
+//                        data + "Path of chosen File", Toast.LENGTH_LONG).show();
 
+
+            }
+        }
+    }
+    public String getFilePath(String path,Boolean type)
+    {
+        if(type == true)
+        {
+            String[] words = path.split("[0]");
+            Toast.makeText(getApplicationContext(),
+                    words[1]+ "Path of chosen File", Toast.LENGTH_LONG).show();
+            Log.d("info","words:"+words[0]+":::"+words[1]);
+            return words[1];
+        }
+        else {
+            Log.d("info", "FIleparts" + path);
+            String[] words = path.split(":");
+            return words[1];
+        }
     }
     private void processJson(JSONObject object) {
 
@@ -236,6 +306,7 @@ public class MainActivity extends AppCompatActivity {
         });
      //   String final_google_id = getGoogleId("https://docs.google.com/spreadsheets/d/1xk8AY8MOWiqwC3qvFEyOVN-wBdMtDW8QtirmcUkocrU/edit?usp=sharing");
         String final_google_id = getGoogleId(GoogleId);
+      // String  final_google_id="1nrI8uNti6R75jfQUvUG9hXIdaFEpOxnKJniXwzvtGcs";
         dow.execute("https://spreadsheets.google.com/tq?key=" + final_google_id);
         //1iuVKzHh2ueSkZ7pAGQBb4CmaqwXHpdd5a3lV89xpdGs
     }
