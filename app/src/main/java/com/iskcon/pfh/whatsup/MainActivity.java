@@ -1,12 +1,18 @@
 package com.iskcon.pfh.whatsup;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,13 +22,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.txusballesteros.bubbles.BubbleLayout;
+import com.txusballesteros.bubbles.BubblesManager;
+import com.txusballesteros.bubbles.OnInitializedCallback;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
-import static android.app.Activity.RESULT_OK;
+import static android.R.attr.permission;
 import static com.iskcon.pfh.whatsup.R.id.Status;
 
 public class MainActivity extends AppCompatActivity {
@@ -38,13 +50,25 @@ public class MainActivity extends AppCompatActivity {
     int addVariableCount = 2; String message;
     int i=0;
     Uri uri;
+    private static final int DRAW_OVER_OTHER_APP_PERMISSION = 123;
+    Integer Callenabled;
+    private BubblesManager bubblesManager;
+    BubbleLayout bubbleView;
+    private static String[] PERMISSIONS_STORAGE = {
+
+
+
+
+            Manifest.permission.SYSTEM_ALERT_WINDOW
+
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
       //  setSupportActionBar(toolbar);
-
+        Callenabled=1;
         txtGoogleId = (EditText) findViewById(R.id.txtGoogleId);
         txtMessage = (EditText) findViewById(R.id.txtMessage);
         txtStatus = (TextView) findViewById(Status);
@@ -71,7 +95,8 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               sendWhatsapp();
+                callAsynchronousTask();
+             //  sendWhatsapp();
             }
         });
 
@@ -87,6 +112,90 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        initializeBubblesManager();
+
+        askForSystemOverlayPermission();
+
+        requestPermission();
+
+    }
+    public void requestPermission()
+    {
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    this,
+                    PERMISSIONS_STORAGE,
+                    1
+
+
+            );
+        }
+    }
+    private void addNewBubble() {
+        bubbleView = (BubbleLayout) LayoutInflater.from(MainActivity.this).inflate(R.layout.bubble_layout, null);
+        bubbleView.setOnBubbleRemoveListener(new BubbleLayout.OnBubbleRemoveListener() {
+            @Override
+            public void onBubbleRemoved(BubbleLayout bubble) { }
+        });
+
+        //The Onclick Listener for the bubble has been set below.
+        bubbleView.setOnBubbleClickListener(new BubbleLayout.OnBubbleClickListener() {
+
+            @Override
+            public void onBubbleClick(BubbleLayout bubble) {
+
+                if(Callenabled == 1) {
+                    Callenabled = 0;
+                    ImageView ima = (ImageView) bubble.getChildAt(0);
+                    ima.setImageResource(R.drawable.pause);
+                }
+                else
+                {
+
+                    Callenabled = 1;
+                    ImageView ima = (ImageView) bubble.getChildAt(0);
+                    ima.setImageResource(R.drawable.profile);
+//                    repeatCall();
+
+                }
+                // bubble.setBackground(R.drawable.pause);
+                //Do what you want onClick of bubble.
+//                Toast.makeText(getApplicationContext(), "Clicked !",
+//                        Toast.LENGTH_SHORT).show();
+            }
+        });
+        bubbleView.setShouldStickToWall(true);
+        bubblesManager.addBubble(bubbleView, 60, 20);
+    }
+
+    private void initializeBubblesManager() {
+        bubblesManager = new BubblesManager.Builder(this)
+                .setTrashLayout(R.layout.bubble_trash_layout)
+                .setInitializationCallback(new OnInitializedCallback() {
+                    @Override
+                    public void onInitialized() {
+                        addNewBubble();
+                    }
+                })
+                .build();
+        bubblesManager.initialize();
+    }
+
+    protected void onDestroy() {
+        super.onDestroy();
+        bubblesManager.recycle();
+    }
+
+    private void askForSystemOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+
+            //If the draw over permission is not available to open the settings screen
+            //to grant the permission.
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, DRAW_OVER_OTHER_APP_PERMISSION);
+        }
     }
     private void add() {
 
@@ -113,10 +222,32 @@ public class MainActivity extends AppCompatActivity {
         String[] words=goog.split("/");
         return words[5];
     }
+    public void callAsynchronousTask() {
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+        TimerTask doAsynchronousTask = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        try {
 
+                            sendWhatsapp();
+//                            PerformBackgroundTask performBackgroundTask = new PerformBackgroundTask();
+//                            // PerformBackgroundTask this class is the class that extends AsynchTask
+//                            performBackgroundTask.execute();
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                        }
+                    }
+                });
+            }
+        };
+        timer.schedule(doAsynchronousTask, 0, 3000); //execute in every 50000 ms
+    }
     public void sendWhatsapp()
     {
-        if (i<=contact_count)
+        if (i<=contact_count && Callenabled == 1)
         {
             try{
             String Message = txtMessage.getText().toString();
@@ -149,6 +280,9 @@ public class MainActivity extends AppCompatActivity {
 //            String jNumber = objects.get("Number").toString();
             Intent sendIntent = new Intent("android.intent.action.MAIN");
 
+                ArrayList<Uri> imageUriArray = new ArrayList<Uri>();
+                imageUriArray.add(uri);
+//                imageUriArray.add(uri);
             sendIntent.setAction(Intent.ACTION_SEND);
 
                 if(lFileInput.getText().toString().isEmpty())
@@ -157,7 +291,8 @@ public class MainActivity extends AppCompatActivity {
                     sendIntent.putExtra(Intent.EXTRA_TEXT, final_message);
                 }
                 else {
-                    sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                  //  sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                    sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM,imageUriArray);
                     sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     sendIntent.setType("image/*");
                 }
@@ -168,15 +303,18 @@ public class MainActivity extends AppCompatActivity {
             sendIntent.putExtra("jid", jNumber + "@s.whatsapp.net"); //phone number without "+" prefix
             sendIntent.setPackage("com.whatsapp");
             startActivityForResult(sendIntent,1);
+                TextView name = (TextView)bubbleView.getChildAt(1);
+                name.setText(jName);
+            i++;
             int cou = contact_count - i;
-            String Status = i+ " Contacts Called " + cou+" Contacts Remaining";
+            String Status = i+ " Messages sent " + cou+" Contacts Remaining";
             txtStatus.setText(Status);
         }
         catch (JSONException e){
         e.printStackTrace();
         }}
 
-        i++;
+
 
     }
 
