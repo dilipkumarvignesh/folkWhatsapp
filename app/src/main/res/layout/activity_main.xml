@@ -65,13 +65,14 @@
         android:layout_height="wrap_content"
         android:text="Add"
         />
+
     <EditText
         android:id="@+id/txtMessage"
         android:layout_width="fill_parent"
         android:layout_height="250px"
         android:gravity="top"
 
-        />
+        android:scrollbars="vertical" />
 
     <TextView
         android:layout_width="fill_parent"

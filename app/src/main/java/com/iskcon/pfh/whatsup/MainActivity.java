@@ -250,11 +250,13 @@ public class MainActivity extends AppCompatActivity {
         if (i<=contact_count && Callenabled == 1)
         {
             try{
+                ArrayList<Uri> imageUriArray = new ArrayList<Uri>();
             String Message = txtMessage.getText().toString();
             JSONObject objects = jA.getJSONObject(i);
                 String jName="";
                 String jNumber="";
                 String temp = "";
+                String fileLocation = "";
                 String final_message = Message;
                 int object_count = objects.length();
                 for(int j=0;j<object_count;j++)
@@ -271,8 +273,17 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("info","number"+jNumber);
 
                     }
+//                    else if(j==2)
+//                    {
+//                        fileLocation = objects.get(""+j).toString();
+//                        Log.d("info","FileLocation:"+fileLocation);
+//                    }
                     else {
                         temp = objects.get("" + j).toString();
+                        if(temp.contains("file") || temp.contains("content")||temp.contains("Content"))
+                        {
+                            imageUriArray.add(Uri.parse(temp));
+                        }
                         final_message = final_message.replace("<" + j + ">", temp);
                     }
                 }
@@ -280,12 +291,17 @@ public class MainActivity extends AppCompatActivity {
 //            String jNumber = objects.get("Number").toString();
             Intent sendIntent = new Intent("android.intent.action.MAIN");
 
-                ArrayList<Uri> imageUriArray = new ArrayList<Uri>();
-                imageUriArray.add(uri);
+                if(!(uri.toString().equals("")))
+                {
+                    imageUriArray.add(uri);
+                }
+              //  imageUriArray.add(uri);
+
+//                imageUriArray.add(Uri.parse(fileLocation));
 //                imageUriArray.add(uri);
             sendIntent.setAction(Intent.ACTION_SEND);
 
-                if(lFileInput.getText().toString().isEmpty())
+                if(lFileInput.getText().toString().isEmpty()&&imageUriArray.isEmpty())
                 {
                     sendIntent.setType("text/plain");
                     sendIntent.putExtra(Intent.EXTRA_TEXT, final_message);
@@ -302,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
 
             sendIntent.putExtra("jid", jNumber + "@s.whatsapp.net"); //phone number without "+" prefix
             sendIntent.setPackage("com.whatsapp");
-            startActivityForResult(sendIntent,1);
+          //  startActivityForResult(sendIntent,1);
                 TextView name = (TextView)bubbleView.getChildAt(1);
                 name.setText(jName);
             i++;
@@ -443,8 +459,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
      //   String final_google_id = getGoogleId("https://docs.google.com/spreadsheets/d/1xk8AY8MOWiqwC3qvFEyOVN-wBdMtDW8QtirmcUkocrU/edit?usp=sharing");
-        String final_google_id = getGoogleId(GoogleId);
-      // String  final_google_id="1nrI8uNti6R75jfQUvUG9hXIdaFEpOxnKJniXwzvtGcs";
+      //  String final_google_id = getGoogleId(GoogleId);
+       String  final_google_id="1YvpIA4nuRCHE9Gi_kLjIt59urPtyNwGBnHZjYZJ8ORo";
         dow.execute("https://spreadsheets.google.com/tq?key=" + final_google_id);
         //1iuVKzHh2ueSkZ7pAGQBb4CmaqwXHpdd5a3lV89xpdGs
     }
