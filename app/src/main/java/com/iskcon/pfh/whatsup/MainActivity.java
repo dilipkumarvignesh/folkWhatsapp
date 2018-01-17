@@ -1,6 +1,9 @@
 package com.iskcon.pfh.whatsup;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -11,11 +14,15 @@ import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -31,21 +38,21 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static android.R.attr.permission;
 import static com.iskcon.pfh.whatsup.R.id.Status;
 
 public class MainActivity extends AppCompatActivity {
 
-    JSONObject obj = new JSONObject();
+
     JSONArray jA = new JSONArray();
-    String GoogleId;
+    String GoogleId,mTemplateName;
+
     int contact_count=0;
     TextView txtStatus;
     ImageView search;
-    EditText txtGoogleId,txtMessage,lFileInput;
+    EditText txtMessage,lFileInput;
+    AutoCompleteTextView txtGoogleId;
     Button btnDownload,add,addName;
     int addVariableCount = 2; String message;
     int i=0;
@@ -54,10 +61,9 @@ public class MainActivity extends AppCompatActivity {
     Integer Callenabled;
     private BubblesManager bubblesManager;
     BubbleLayout bubbleView;
+    private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+
     private static String[] PERMISSIONS_STORAGE = {
-
-
-
 
             Manifest.permission.SYSTEM_ALERT_WINDOW
 
@@ -69,7 +75,56 @@ public class MainActivity extends AppCompatActivity {
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
       //  setSupportActionBar(toolbar);
         Callenabled=1;
-        txtGoogleId = (EditText) findViewById(R.id.txtGoogleId);
+       // String[] fL = new String[10];
+
+       // FileUtil.writeConfiguration(this,"New file written");
+        txtGoogleId = (AutoCompleteTextView) findViewById(R.id.txtGoogleId);
+        //FileUtil.readFileFromInternalStorage(this,"document_urls.txt");
+
+        String[] fL = FileUtil.readFileFromInternalStorage(this,"document_urls.txt");
+
+        String[] fl1 = {"Apple","Orange"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>
+                (this, android.R.layout.select_dialog_item, fL);
+        Log.d("info","AdapterWorking");
+
+      //  AutoCompleteTextView actv = (AutoCompleteTextView) findViewById(R.id.txtGoogleId);
+        txtGoogleId.setThreshold(1);//will start working from first character
+        txtGoogleId.setAdapter(adapter);
+
+        Log.d("info","AdapterWorking1");
+
+        txtGoogleId.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
+                Log.d("info","Item Selected:"+position+":"+id);
+                String selection = (String) adapter.getItemAtPosition(position);
+
+                String[] outputEle = selection.split(" ",2);
+//                TextView nameStatus = (TextView) findViewById(R.id.txtStatus);
+//                SearchName = outputEle[1];
+//                SearchNumber = outputEle[0];
+//                nameStatus.setText("Update Call Status for " + SearchName);
+//                SearchStatus = 1;
+//                int pos = -1;
+//
+//                for (int i = 0; i < numbers.length; i++) {
+//                    if (numbers[i].equals(selection)) {
+//                        pos = i;
+//
+//                        Log.d("info","Number:"+pos);
+//                        break;
+//                    }
+//                }
+//                pre_q = i;
+//                i=pos;
+            }
+
+
+        });
+
+        Log.d("info","AdapterWorking2");
+
         txtMessage = (EditText) findViewById(R.id.txtMessage);
         txtStatus = (TextView) findViewById(Status);
         btnDownload = (Button) findViewById(R.id.btnDownload);
@@ -87,6 +142,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("info", "onClick working");
 
                 download_excel();
+            }
+        });
+        Button btSave = (Button)findViewById(R.id.btnSave);
+        btSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveFile();
             }
         });
         add = (Button) findViewById(R.id.btnAdd);
@@ -169,6 +231,41 @@ public class MainActivity extends AppCompatActivity {
         bubblesManager.addBubble(bubbleView, 60, 20);
     }
 
+    public void saveFile()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Save File Location");
+        final String fLocation = txtGoogleId.getText().toString();
+        String message =fLocation +  " \nGive Template Name for Saving the File";
+        builder.setMessage(message);
+
+
+// Set up the input
+        final EditText input = new EditText(this);
+// Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        builder.setView(input);
+        final Context now = this;
+// Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mTemplateName = input.getText().toString();
+                String wriFile = mTemplateName + "@"+fLocation;
+                FileUtil.writeConfiguration(now,wriFile);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
+
+    }
     private void initializeBubblesManager() {
         bubblesManager = new BubblesManager.Builder(this)
                 .setTrashLayout(R.layout.bubble_trash_layout)
@@ -213,6 +310,7 @@ public class MainActivity extends AppCompatActivity {
         message = message + " <name>";
         txtMessage.setText(message);
         txtMessage.setSelection(txtMessage.getText().length());
+       // FileUtil.readFileFromInternalStorage(this,"document_urls.txt");
 
     }
 
@@ -223,27 +321,42 @@ public class MainActivity extends AppCompatActivity {
         return words[5];
     }
     public void callAsynchronousTask() {
-        final Handler handler = new Handler();
-        Timer timer = new Timer();
-        TimerTask doAsynchronousTask = new TimerTask() {
+//        final Handler handler = new Handler();
+//        Timer timer = new Timer();
+//        TimerTask doAsynchronousTask = new TimerTask() {
+//            @Override
+//            public void run() {
+//                handler.post(new Runnable() {
+//                    public void run() {
+//                        try {
+//
+//                            sendWhatsapp();
+////                            PerformBackgroundTask performBackgroundTask = new PerformBackgroundTask();
+////                            // PerformBackgroundTask this class is the class that extends AsynchTask
+////                            performBackgroundTask.execute();
+//                        } catch (Exception e) {
+//                            // TODO Auto-generated catch block
+//                        }
+//                    }
+//                });
+//            }
+//        };
+//        timer.schedule(doAsynchronousTask, 0, 3000); //execute in every 50000 ms
+
+        final Handler handler1 = new Handler();
+
+
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                handler.post(new Runnable() {
-                    public void run() {
-                        try {
-
-                            sendWhatsapp();
-//                            PerformBackgroundTask performBackgroundTask = new PerformBackgroundTask();
-//                            // PerformBackgroundTask this class is the class that extends AsynchTask
-//                            performBackgroundTask.execute();
-                        } catch (Exception e) {
-                            // TODO Auto-generated catch block
-                        }
-                    }
-                });
+      /* do what you need to do */
+                sendWhatsapp();
+      /* and here comes the "trick" */
+                handler1.postDelayed(this, 6000);
             }
         };
-        timer.schedule(doAsynchronousTask, 0, 3000); //execute in every 50000 ms
+
+        handler1.postDelayed(runnable, 6000);
     }
     public void sendWhatsapp()
     {
@@ -280,28 +393,27 @@ public class MainActivity extends AppCompatActivity {
 //                    }
                     else {
                         temp = objects.get("" + j).toString();
-                        if(temp.contains("file") || temp.contains("content")||temp.contains("Content"))
-                        {
-                            imageUriArray.add(Uri.parse(temp));
-                        }
+//                        if(temp.contains("file") || temp.contains("content")||temp.contains("Content"))
+//                        {
+//                            imageUriArray.add(Uri.parse(temp));
+//                        }
                         final_message = final_message.replace("<" + j + ">", temp);
                     }
                 }
-//            String jName = objects.get("Name").toString();
-//            String jNumber = objects.get("Number").toString();
+
             Intent sendIntent = new Intent("android.intent.action.MAIN");
 
-                if(!(uri.toString().equals("")))
-                {
-                    imageUriArray.add(uri);
-                }
+//                if(!(uri.toString().equals("")))
+//                {
+//                    imageUriArray.add(uri);
+//                }
               //  imageUriArray.add(uri);
 
-//                imageUriArray.add(Uri.parse(fileLocation));
-//                imageUriArray.add(uri);
+              //  imageUriArray.add(Uri.parse(fileLocation));
+                imageUriArray.add(uri);
             sendIntent.setAction(Intent.ACTION_SEND);
 
-                if(lFileInput.getText().toString().isEmpty()&&imageUriArray.isEmpty())
+                if(lFileInput.getText().toString().isEmpty())
                 {
                     sendIntent.setType("text/plain");
                     sendIntent.putExtra(Intent.EXTRA_TEXT, final_message);
@@ -318,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
 
             sendIntent.putExtra("jid", jNumber + "@s.whatsapp.net"); //phone number without "+" prefix
             sendIntent.setPackage("com.whatsapp");
-          //  startActivityForResult(sendIntent,1);
+            startActivityForResult(sendIntent,1);
                 TextView name = (TextView)bubbleView.getChildAt(1);
                 name.setText(jName);
             i++;
@@ -333,7 +445,55 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+    private void showContacts() {
+        // Check the SDK version and whether the permission is already granted or not.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
+            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
+        }
+        else
+        {
+           addContacts();
+        }
+    }
 
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+
+            case PERMISSIONS_REQUEST_READ_CONTACTS:{
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission is granted
+                    // writeContact("ZABC","1234567890");
+                   addContacts();
+                }
+            }
+        }
+    }
+    public void addContacts()
+    {
+        for(int i=0;i<jA.length();i++)
+        {
+
+            try {
+                JSONObject jObject;
+                jObject = jA.getJSONObject(i);
+
+            String Number = jObject.get(""+1).toString();
+            Log.d("info","ContactNumber:"+Number);
+            Boolean ContactExists = ContactHelper.contactExists(this,Number);
+            Log.d("info","ContactExists:"+ContactExists);
+            if(!ContactExists)
+            {
+                String Name = jObject.get(""+0).toString();
+                ContactHelper.writeContact(this,Name,Number);
+                Log.d("info","Writing Contact");
+            }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d("info", "Inside OnActivityResult");
         Log.d("info", "I value=" + i);
@@ -424,6 +584,7 @@ public class MainActivity extends AppCompatActivity {
                                 obj.put("" + z, temp);
                         } else if (columns.getJSONObject(z).has("v") == true) {
                             temp = columns.getJSONObject(z).getString("v");
+
                             if (temp != null)
                                 obj.put("" + z, temp);
                         }
@@ -443,10 +604,16 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        showContacts();
     }
     private void download_excel() {
         //  DownloadWebpageTask myTask = new DownloadWebpageTask();
         GoogleId = txtGoogleId.getText().toString();
+
+        if(GoogleId.contains(("@")))
+        {
+            GoogleId=GoogleId.split("@")[1];
+        }
         Log.d("info", "googleId=" + GoogleId);
         Toast.makeText(getApplicationContext(),
                 "Downloading Excel. Please wait ...", Toast.LENGTH_LONG).show();
@@ -459,8 +626,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
      //   String final_google_id = getGoogleId("https://docs.google.com/spreadsheets/d/1xk8AY8MOWiqwC3qvFEyOVN-wBdMtDW8QtirmcUkocrU/edit?usp=sharing");
-      //  String final_google_id = getGoogleId(GoogleId);
-       String  final_google_id="1YvpIA4nuRCHE9Gi_kLjIt59urPtyNwGBnHZjYZJ8ORo";
+       String final_google_id = getGoogleId(GoogleId);
+     //g  String  final_google_id="1YvpIA4nuRCHE9Gi_kLjIt59urPtyNwGBnHZjYZJ8ORo";
         dow.execute("https://spreadsheets.google.com/tq?key=" + final_google_id);
         //1iuVKzHh2ueSkZ7pAGQBb4CmaqwXHpdd5a3lV89xpdGs
     }
