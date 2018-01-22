@@ -13,6 +13,7 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.PhoneLookup;
 import android.provider.ContactsContract.RawContacts;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -58,12 +59,15 @@ public class ContactHelper {
             Cursor cur = _activity.getContentResolver().query(lookupUri, mPhoneNumberProjection, null, null, null);
             try {
                 if (cur.moveToFirst()) {
+                    Toast.makeText(_activity,"Number exists",Toast.LENGTH_LONG).show();
                     return true;
+
                 }
             } finally {
                 if (cur != null)
                     cur.close();
             }
+            Toast.makeText(_activity,"Number does not exist",Toast.LENGTH_LONG).show();
             return false;
         } else {
             return false;
@@ -176,10 +180,11 @@ public class ContactHelper {
     }
 
     public static void writeContact(Activity _activity, String displayName, String number) {
+        Toast.makeText(_activity,"Inside WriteContact",Toast.LENGTH_LONG).show();
         ArrayList contentProviderOperations = new ArrayList();
         //insert raw contact using RawContacts.CONTENT_URI
         contentProviderOperations.add(ContentProviderOperation.newInsert(RawContacts.CONTENT_URI)
-                .withValue(RawContacts.ACCOUNT_TYPE, null).withValue(RawContacts.ACCOUNT_NAME, null).build());
+                .withValue(RawContacts.ACCOUNT_TYPE, null).withValue(RawContacts.ACCOUNT_NAME,null).build());
         //insert contact display name using Data.CONTENT_URI
         contentProviderOperations.add(ContentProviderOperation.newInsert(Data.CONTENT_URI)
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
@@ -193,8 +198,11 @@ public class ContactHelper {
                     applyBatch(ContactsContract.AUTHORITY, contentProviderOperations);
         } catch (RemoteException e) {
             e.printStackTrace();
+            Toast.makeText(_activity,e.getMessage(),Toast.LENGTH_LONG).show();
+
         } catch (OperationApplicationException e) {
             e.printStackTrace();
+            Toast.makeText(_activity,e.getMessage(),Toast.LENGTH_LONG).show();
         }
     }
 

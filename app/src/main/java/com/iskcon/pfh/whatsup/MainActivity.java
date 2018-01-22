@@ -65,7 +65,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static String[] PERMISSIONS_STORAGE = {
 
-            Manifest.permission.SYSTEM_ALERT_WINDOW
+//            Manifest.permission.SYSTEM_ALERT_WINDOW,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.WRITE_CONTACTS
 
     };
     @Override
@@ -179,6 +181,8 @@ public class MainActivity extends AppCompatActivity {
         askForSystemOverlayPermission();
 
         requestPermission();
+
+      //  addContacts();
 
     }
     public void requestPermission()
@@ -352,11 +356,11 @@ public class MainActivity extends AppCompatActivity {
       /* do what you need to do */
                 sendWhatsapp();
       /* and here comes the "trick" */
-                handler1.postDelayed(this, 6000);
+                handler1.postDelayed(this, 4000);
             }
         };
 
-        handler1.postDelayed(runnable, 6000);
+        handler1.postDelayed(runnable, 4000);
     }
     public void sendWhatsapp()
     {
@@ -445,32 +449,50 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-    private void showContacts() {
-        // Check the SDK version and whether the permission is already granted or not.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
-            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
-        }
-        else
-        {
-           addContacts();
-        }
-    }
+//    private void showContacts() {
+//        // Check the SDK version and whether the permission is already granted or not.
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+//            Toast.makeText(getApplicationContext(),"Inside IF Request Permission",Toast.LENGTH_LONG).show();
+//            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS,Manifest.permission.WRITE_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
+//            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
+//        }
+//        else
+//        {
+//           addContacts();
+//           Toast.makeText(getApplicationContext(),"Inside Else Request Permission",Toast.LENGTH_LONG).show();
+//        }
+//    }
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        Toast.makeText(getApplicationContext(),"Inside On Request Permission: "+requestCode+"Results:"+grantResults[0]+"Android Perm:"+PackageManager.PERMISSION_GRANTED,Toast.LENGTH_LONG).show();
         switch (requestCode) {
 
-            case PERMISSIONS_REQUEST_READ_CONTACTS:{
+            case PERMISSIONS_REQUEST_READ_CONTACTS:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission is granted
                     // writeContact("ZABC","1234567890");
+                    Toast.makeText(getApplicationContext(),"Permission Granted",Toast.LENGTH_LONG).show();
                    addContacts();
                 }
+                break;
+            case 1:
+            {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getApplicationContext(),"Permission Granted",Toast.LENGTH_LONG).show();
+                }
             }
+            case DRAW_OVER_OTHER_APP_PERMISSION:
+            {
+
+
+            }
+
         }
     }
+
     public void addContacts()
     {
+        Toast.makeText(this,"Inside Write Contacts",Toast.LENGTH_LONG).show();
         for(int i=0;i<jA.length();i++)
         {
 
@@ -491,6 +513,7 @@ public class MainActivity extends AppCompatActivity {
 
             } catch (JSONException e) {
                 e.printStackTrace();
+                Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -553,8 +576,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             JSONArray rows = object.getJSONArray("rows");
             Log.d("info","rows="+rows);
-            Toast.makeText(getApplicationContext(),rows.length()+
-                    "Contacts Downloaded", Toast.LENGTH_LONG).show();
+//            Toast.makeText(getApplicationContext(),rows.length()+
+//                    "Contacts Downloaded", Toast.LENGTH_LONG).show();
             contact_count = rows.length();
             //int cou = contact_count - i;
             String Status =  "0 Contacts Called " + contact_count+" Contacts Remaining";
@@ -600,11 +623,12 @@ public class MainActivity extends AppCompatActivity {
 
             }
             Log.d("info", "values=" + jA);
-
+            Toast.makeText(getApplicationContext(),"Inside Process JSON",Toast.LENGTH_LONG).show();
+          addContacts();
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        showContacts();
+
     }
     private void download_excel() {
         //  DownloadWebpageTask myTask = new DownloadWebpageTask();
@@ -627,7 +651,7 @@ public class MainActivity extends AppCompatActivity {
         });
      //   String final_google_id = getGoogleId("https://docs.google.com/spreadsheets/d/1xk8AY8MOWiqwC3qvFEyOVN-wBdMtDW8QtirmcUkocrU/edit?usp=sharing");
        String final_google_id = getGoogleId(GoogleId);
-     //g  String  final_google_id="1YvpIA4nuRCHE9Gi_kLjIt59urPtyNwGBnHZjYZJ8ORo";
+     //  String  final_google_id="1YvpIA4nuRCHE9Gi_kLjIt59urPtyNwGBnHZjYZJ8ORo";
         dow.execute("https://spreadsheets.google.com/tq?key=" + final_google_id);
         //1iuVKzHh2ueSkZ7pAGQBb4CmaqwXHpdd5a3lV89xpdGs
     }
